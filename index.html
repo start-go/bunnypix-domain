@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="theme-color" content="#CD4662">
+  <title>BunnyPix</title>
+  <!-- Add favicon links -->
+  <link rel="icon" href="assets/images/favicon/icon.png" type="image/png">
+  <link rel="shortcut icon" href="assets/images/favicon/icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="assets/images/favicon/icon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream: '#F4F2EF',
+            pink: '#CD4662',
+            sage: '#AEC289',
+            blush: '#F4DBDB',
+          },
+          fontFamily: {
+            display: ['Quicksand', 'sans-serif'],
+            body: ['Nunito', 'sans-serif'],
+            header: ['Press Start 2P', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    /* Hide scrollbar but keep functionality */
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    /* Thumbnail styling */
+    #thumbnails img {
+      height: 120px;
+      width: auto;
+      object-fit: contain;
+      border-radius: 0.5rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    #thumbnails {
+      min-height: 120px;
+      padding: 0.5rem;
+    }
+    /* Thumbnail container scrollbar styling */
+    #thumbnails::-webkit-scrollbar {
+      height: 6px;
+    }
+    
+    #thumbnails::-webkit-scrollbar-track {
+      background: #F4F2EF;
+      border-radius: 3px;
+    }
+    
+    #thumbnails::-webkit-scrollbar-thumb {
+      background: #AEC289;
+      border-radius: 3px;
+    }
+    
+    #thumbnails::-webkit-scrollbar-thumb:hover {
+      background: #CD4662;
+    }
+
+    /* Thumbnail styling */
+    #thumbnails img {
+      height: 120px;
+      width: auto;
+      object-fit: contain;
+      border-radius: 0.5rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    #thumbnails img:hover {
+      transform: scale(1.05);
+    }
+
+    /* Preview popup animation */
+    @keyframes popupFade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    #previewPopup.flex {
+      animation: popupFade 0.2s ease-out;
+    }
+
+    /* Flash effect */
+    @keyframes flash {
+      0% { opacity: 0; }
+      50% { opacity: 0.9; }
+      100% { opacity: 0; }
+    }
+
+    #flash.active {
+      display: block !important;
+      animation: flash 500ms ease-out forwards;
+    }
+
+    /* Add new animations for mobile menu */
+    @keyframes slidePanelIn {
+      from { transform: translateX(100%) translateY(-50%); }
+      to { transform: translateX(0) translateY(-50%); }
+    }
+
+    .side-controls.open {
+      right: 0;
+      animation: slidePanelIn 0.3s ease-out;
+    }
+
+    /* Update scrollbar styling to match preview */
+    .side-controls::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .side-controls::-webkit-scrollbar-track {
+      background: #F4F2EF;
+      border-radius: 3px;
+    }
+    
+    .side-controls::-webkit-scrollbar-thumb {
+      background: #AEC289;
+      border-radius: 3px;
+    }
+    
+    .side-controls::-webkit-scrollbar-thumb:hover {
+      background: #CD4662;
+    }
+
+    /* Replace previous container size styles with these responsive ones */
+    #webcam-container {
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Media query to ensure webcam fits in viewport height */
+    @media (min-height: 900px) {
+      #webcam-canvas {
+        max-height: 65vh;
+      }
+    }
+
+    @media (max-height: 700px) {
+      #webcam-canvas {
+        max-height: 55vh;
+      }
+    }
+
+    /* Styling for photo counter */
+    .photo-counter {
+      background-color: white;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.5rem;
+      font-weight: bold;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .photo-counter .count {
+      color: #CD4662;
+      font-size: 1.25rem;
+    }
+    
+    /* Max photos popup animation */
+    @keyframes shakeAnimation {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-5px); }
+      100% { transform: translateX(0); }
+    }
+    
+    .shake {
+      animation: shakeAnimation 0.5s ease-in-out;
+    }
+
+    /* Add fixed widths for slider containers and value displays */
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .slider-container input[type="range"] {
+      flex: 1;
+      min-width: 150px;
+    }
+    
+    .slider-value {
+      width: 40px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Keep only spinner animation keyframes */
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .animate-spin-custom {
+      animation: spin 1s linear infinite;
+    }
+
+    /* QR Code modal animation */
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    #qrCodeModal.flex > div {
+      animation: modalFadeIn 0.3s ease-out;
+    }
+
+    /* Apply font-family to header */
+    h1 {
+      font-family: 'Press Start 2P', monospace;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[url(assets/images/bg.jpg)] font-body">
+  <header class="py-4 bg-white shadow-sm">
+    <h1 class="text-2xl font-bold text-center text-pink">BunnyPix</h1>
+  </header>
+  
+  <main class="container mx-auto px-4 py-6 flex flex-col items-center gap-6 max-w-6xl">
+    <div class="w-full grid gap-6">
+      <!-- Webcam Select -->
+      <select id="webcamSelect" class="mx-auto w-64 p-2 border-2 border-sage rounded-lg bg-white shadow-sm focus:border-pink focus:ring-1 focus:ring-pink font-body">
+      </select>
+
+      <!-- Camera Section - Updated grid classes for better fit -->
+      <div class="grid md:grid-cols-[1fr_minmax(auto,4fr)_1fr] gap-6 items-center">
+        <!-- Left spacer/control area -->
+        <div class="hidden md:block"></div>
+        
+        <!-- Webcam Container with fixed 4:3 ratio -->
+        <div id="webcam-container" class="relative rounded-lg overflow-hidden mx-auto flex justify-center items-center">
+          <canvas id="webcam-canvas" class="bg-white rounded-lg shadow-lg object-contain"></canvas>
+          <!-- Add Countdown Overlay -->
+          <div id="countdown" class="hidden absolute inset-0 flex items-center justify-center">
+            <span class="text-8xl font-display font-bold text-white drop-shadow-lg"></span>
+          </div>
+          <!-- Add Flash Overlay -->
+          <div id="flash" class="hidden absolute inset-0 bg-white pointer-events-none"></div>
+        </div>
+
+        <!-- Side Controls - Desktop -->
+        <div class="hidden md:flex flex-col gap-4 items-center w-48">
+          <select id="filterSelect" class="w-full p-2 border-2 border-sage rounded-lg bg-white shadow-sm hover:border-pink focus:border-pink focus:ring-1 focus:ring-pink">
+            <option value="none">No Filter</option>
+            <option value="sepia">Sepia</option>
+            <option value="grayscale">Black & White</option>
+            <option value="vintage">Vintage</option>
+            <option value="warm">Warm</option>
+            <option value="cool">Cool</option>
+            <option value="dramatic">Dramatic</option>
+            <option value="cinema">Cinema</option>
+          </select>
+          <button id="flipButton" class="w-full p-2 bg-blush text-pink rounded-lg shadow-sm hover:bg-pink hover:text-white transition-colors">
+            <i class="fas fa-sync"></i><span class="ml-2">Flip</span>
+          </button>
+          <div class="w-full">
+            <button id="toggleOverlay" class="w-full p-2 bg-white rounded-lg shadow-sm hover:bg-gray-50">
+              <i class="fas fa-image"></i><span class="ml-2">Add Overlay</span>
+            </button>
+            <div id="overlayControls" class="mt-4 hidden">
+              <div class="slider-container">
+                <i class="fas fa-search-minus"></i>
+                <input type="range" id="scaleSlider" min="1" max="300" value="30" step="1" class="w-full">
+                <i class="fas fa-search-plus"></i>
+                <span id="scaleValue" class="slider-value">30%</span>
+              </div>
+              
+              <div class="slider-container">
+                <i class="fas fa-undo"></i>
+                <input type="range" id="rotateSlider" min="-180" max="180" value="0" step="5" class="w-full">
+                <i class="fas fa-redo"></i>
+                <span id="rotateValue" class="slider-value">0°</span>
+              </div>
+
+              <div class="flex gap-2">
+                <button id="fitButton" class="flex-1 p-2 bg-white rounded-lg shadow-sm hover:bg-gray-50">
+                  <i class="fas fa-expand"></i><span class="ml-2">Fit</span>
+                </button>
+                <button id="autoCropButton" class="flex-1 p-2 bg-white rounded-lg shadow-sm hover:bg-gray-50">
+                  <i class="fas fa-crop-alt"></i><span class="ml-2">Crop</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile Menu Toggle -->
+        <button class="mobile-menu-toggle md:hidden fixed right-0 bottom-1 -translate-y-1/2 bg-sage text-white p-3 rounded-l-lg shadow-lg z-50 hover:bg-pink transition-colors">
+          <i class="fas fa-cog"></i>
+        </button>
+
+        <!-- Side Controls - Mobile -->
+        <div class="side-controls fixed md:hidden top-1/2 -translate-y-1/2 right-[-280px] w-[280px] bg-white shadow-lg p-6 flex flex-col gap-4 z-40 transition-all duration-300 rounded-l-xl max-h-[80vh] overflow-y-auto">
+          <select id="filterSelect-mobile" class="w-full p-2 border-2 border-sage rounded-lg bg-white shadow-sm hover:border-pink focus:border-pink focus:ring-1 focus:ring-pink">
+            <option value="none">No Filter</option>
+            <option value="sepia">Sepia</option>
+            <option value="grayscale">Black & White</option>
+            <option value="vintage">Vintage</option>
+            <option value="warm">Warm</option>
+            <option value="cool">Cool</option>
+            <option value="dramatic">Dramatic</option>
+            <option value="cinema">Cinema</option>
+          </select>
+          
+          <button id="flipButton-mobile" class="w-full p-2 bg-blush text-pink rounded-lg shadow-sm hover:bg-pink hover:text-white transition-colors">
+            <i class="fas fa-sync"></i><span class="ml-2">Flip</span>
+          </button>
+          
+          <div class="w-full space-y-4">
+            <button id="toggleOverlay-mobile" class="w-full p-2 bg-blush text-pink rounded-lg shadow-sm hover:bg-pink hover:text-white transition-colors">
+              <i class="fas fa-image"></i><span class="ml-2">Add Overlay</span>
+            </button>
+            
+            <div id="overlayControls-mobile" class="hidden space-y-4">
+              <div class="slider-container">
+                <i class="fas fa-search-minus text-pink"></i>
+                <input type="range" id="scaleSlider-mobile" min="1" max="300" value="30" step="1" 
+                       class="w-full accent-pink">
+                <i class="fas fa-search-plus text-pink"></i>
+                <span id="scaleValue-mobile" class="slider-value">30%</span>
+              </div>
+              
+              <div class="slider-container">
+                <i class="fas fa-undo text-pink"></i>
+                <input type="range" id="rotateSlider-mobile" min="-180" max="180" value="0" step="5"
+                       class="w-full accent-pink">
+                <i class="fas fa-redo text-pink"></i>
+                <span id="rotateValue-mobile" class="slider-value">0°</span>
+              </div>
+
+              <div class="flex gap-2">
+                <button id="fitButton-mobile" class="flex-1 p-2 bg-blush text-pink rounded-lg shadow-sm hover:bg-pink hover:text-white transition-colors">
+                  <i class="fas fa-expand"></i><span class="ml-2">Fit</span>
+                </button>
+                <button id="autoCropButton-mobile" class="flex-1 p-2 bg-blush text-pink rounded-lg shadow-sm hover:bg-pink hover:text-white transition-colors">
+                  <i class="fas fa-crop-alt"></i><span class="ml-2">Crop</span>
+                </button>
+              </div>
+              
+              <button id="removeOverlay-mobile" class="w-full p-2 bg-pink text-white rounded-lg shadow-sm hover:bg-sage transition-colors">
+                <i class="fas fa-trash-alt"></i><span class="ml-2">Remove Overlay</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Controls -->
+      <div class="flex flex-col gap-4 items-center">
+        <div class="flex gap-4 items-center">
+          <button id="retakeButton" class="px-6 py-3 bg-blush text-pink rounded-lg shadow hover:bg-pink hover:text-white transition-colors font-display font-bold" disabled>
+            <i class="fas fa-redo"></i>
+          </button>
+          <button id="captureButton" class="px-6 py-3 bg-sage text-white rounded-lg shadow hover:bg-pink transition-colors font-display font-bold">
+            <i class="fas fa-camera"></i>
+          </button>
+        </div>
+        <div class="flex gap-4 items-center">
+          <div class="photo-counter">
+            <i class="fas fa-images text-sage"></i>
+            <span><span id="photoCount" class="count">0</span>/<span id="maxPhotos">4</span></span>
+          </div>
+          <button id="nextButton" class="px-6 py-3 bg-pink text-white rounded-lg shadow hover:bg-sage transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-display font-bold" disabled>
+            <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Update thumbnails section -->
+    <div id="thumbnailContainer" class="border-2 border-sage rounded-lg bg-white p-2 shadow-sm hidden">
+      <div id="thumbnails" class="flex gap-2 overflow-x-auto h-[140px] px-2 py-1">
+        <!-- Thumbnails will be dynamically added here -->
+      </div>
+    </div>
+  </main>
+
+  <!-- Add Footer with Buy Me Coffee Button and Copyright -->
+  <footer class="container mx-auto px-4 py-6 flex flex-col md:flex-row justify-between items-center gap-4 border-t border-gray-200 mt-8">
+    <div class="text-sm text-gray-600">
+      © 2025 <a href="https://github.com/erry-az" target="_blank" rel="noopener" class="text-pink hover:underline">github.com/erry-az</a> • All rights reserved
+    </div>
+    <button id="buyMeCoffeeBtn" class="px-4 py-2 bg-yellow-500 text-white rounded-lg shadow hover:bg-yellow-600 transition-colors font-display font-bold flex items-center gap-2">
+      <i class="fas fa-mug-hot"></i><span>Buy Me a Coffee</span>
+    </button>
+  </footer>
+
+  <!-- Add Buy Me Coffee QR Code Modal -->
+  <div id="qrCodeModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-[100]">
+    <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4 relative">
+      <button id="closeQrModal" class="absolute top-2 right-2 text-gray-500 hover:text-pink">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+      <div class="flex flex-col gap-4 items-center text-center">
+        <h2 class="text-xl font-bold text-pink font-display">Support My Work</h2>
+        <p class="text-gray-700">If you find this app useful, consider buying me a coffee!</p>
+        <div class="p-2 border-2 border-sage rounded-lg">
+          <img src="assets/images/qr.png" alt="Buy Me a Coffee QR Code" class="w-48 h-48 object-contain">
+        </div>
+        <p class="text-sm text-gray-500">Scan with your phone camera or payment app</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview Popup -->
+  <div id="previewPopup" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-[100]">
+    <div class="bg-white rounded-lg p-4 max-w-2xl w-full mx-4 relative">
+      <button class="absolute top-2 right-2 text-gray-500 hover:text-pink">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+      <div class="flex flex-col gap-4">
+        <img id="previewImage" class="rounded-lg max-h-[70vh] object-contain mx-auto" src="" alt="Preview">
+        <div class="flex justify-center gap-4">
+          <button id="deletePhoto" class="px-6 py-2 bg-pink text-white rounded-lg shadow hover:bg-red-600 transition-colors font-display font-bold">
+            <i class="fas fa-trash-alt"></i><span class="ml-2">Delete Photo</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Max Photos Popup -->
+  <div id="maxPhotosPopup" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-[100]">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4 relative">
+      <button class="absolute top-2 right-2 text-gray-500 hover:text-pink">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+      <div class="flex flex-col gap-4 items-center text-center">
+        <i class="fas fa-exclamation-circle text-pink text-4xl"></i>
+        <h2 class="text-xl font-bold font-display">Maximum Photos Reached</h2>
+        <p class="text-gray-700">You've reached the maximum limit of 4 photos. Please delete some photos to start a new sequence or continue to the photo strip.</p>
+        <div class="flex gap-4 mt-2">
+          <button id="maxPhotosOkBtn" class="px-6 py-2 bg-sage text-white rounded-lg shadow hover:bg-pink transition-colors font-display font-bold">
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay for Background Processing - Using Tailwind -->
+  <div id="loadingOverlay" class="hidden fixed inset-0 bg-black/70 flex flex-col items-center justify-center z-[1000]">
+    <div class="w-12 h-12 border-4 border-white border-t-pink rounded-full animate-spin-custom mb-5"></div>
+    <div id="loadingStatus" class="text-white text-lg font-bold">Processing...</div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+
+  <script>
+    // Buy Me Coffee button functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const buyMeCoffeeBtn = document.getElementById('buyMeCoffeeBtn');
+      const qrCodeModal = document.getElementById('qrCodeModal');
+      const closeQrModal = document.getElementById('closeQrModal');
+      
+      if (buyMeCoffeeBtn) {
+        buyMeCoffeeBtn.addEventListener('click', function() {
+          qrCodeModal.classList.remove('hidden');
+          qrCodeModal.classList.add('flex');
+        });
+      }
+      
+      if (closeQrModal) {
+        closeQrModal.addEventListener('click', function() {
+          qrCodeModal.classList.remove('flex');
+          qrCodeModal.classList.add('hidden');
+        });
+      }
+      
+      // Close modal when clicking outside
+      qrCodeModal.addEventListener('click', function(e) {
+        if (e.target === qrCodeModal) {
+          qrCodeModal.classList.remove('flex');
+          qrCodeModal.classList.add('hidden');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

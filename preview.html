@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>BunnyPix</title>
+    <!-- Add favicon links -->
+    <link rel="icon" href="assets/images/favicon/icon.png" type="image/png">
+    <link rel="shortcut icon" href="assets/images/favicon/icon.png" type="image/png">
+    <link rel="apple-touch-icon" href="assets/images/favicon/icon.png">
+    <!-- Existing CSS links -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#F4F2EF',
+                        pink: '#CD4662',
+                        sage: '#AEC289',
+                        blush: '#F4DBDB',
+                    },
+                    fontFamily: {
+                        display: ['Quicksand', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                        header: ['Press Start 2P', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="min-h-screen bg-cream font-body">
+    <header class="py-4 bg-white shadow-sm">
+        <h1 class="text-2xl font-bold text-center text-pink font-header">BunnyPix</h1>
+        <button id="customizeToggle" class="md:hidden fixed right-0 bottom-1 -translate-y-1/2 bg-sage text-white p-3 rounded-l-lg shadow-lg z-50 hover:bg-pink transition-colors">
+            <i class="fas fa-cog"></i>
+        </button>
+    </header>
+
+    <main class="container mx-auto px-4 py-6 grid md:grid-cols-[1fr_auto] gap-6 max-w-7xl">
+        <div class="preview-section flex flex-col items-center gap-6">
+            <canvas id="stripCanvas" class="max-w-full rounded-lg shadow-lg bg-white"></canvas>
+            <div class="flex gap-4">
+                <button id="downloadButton" class="px-6 py-3 bg-sage text-white rounded-lg shadow hover:bg-pink transition-colors font-display font-bold">
+                    <i class="fas fa-download"></i>
+                </button>
+                <button id="backButton" class="px-6 py-3 bg-blush text-pink rounded-lg shadow hover:bg-pink hover:text-white transition-colors font-display font-bold">
+                    <i class="fas fa-redo"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="customize-panel fixed md:static top-1/2 -translate-y-1/2 md:translate-y-0 right-[-320px] md:right-auto w-[320px] bg-white shadow-lg rounded-l-xl md:rounded-lg p-6 z-40 transition-all duration-300 max-h-[90vh] overflow-y-auto">
+            <div class="customize-content space-y-6">
+                <h3 class="text-xl font-bold text-pink font-display">Customize your photo strip</h3>
+                
+                <!-- Add Resolution Control before the existing controls -->
+                <div class="space-y-4">
+                    <label class="font-display font-bold text-gray-700">Photo Quality:</label>
+                    <select id="resolutionSelect" class="w-full p-2 border-2 border-sage rounded-lg bg-white shadow-sm hover:border-pink focus:border-pink focus:ring-1 focus:ring-pink">
+                        <option value="1">Standard (400px width)</option>
+                        <option value="2" selected>High (800px width)</option>
+                        <option value="3">Ultra (1200px width)</option>
+                        <option value="4">Maximum (1600px width)</option>
+                    </select>
+                    <p class="text-xs text-gray-500">Higher quality produces larger file sizes. Maximum quality may slow down some devices.</p>
+                </div>
+                
+                <!-- Background Color Controls -->
+                <div class="space-y-4">
+                    <label class="font-display font-bold text-gray-700">Background:</label>
+                    <select id="backgroundType" class="w-full p-2 border-2 border-sage rounded-lg bg-white shadow-sm hover:border-pink focus:border-pink focus:ring-1 focus:ring-pink">
+                        <option value="solid">Solid Color</option>
+                        <option value="gradient">Gradient</option>
+                        <option value="image">Custom Image</option>
+                    </select>
+                    
+                    <div id="colorControls" class="space-y-4">
+                        <div id="solidControls">
+                            <input type="color" id="solidColor" value="#FFF9C4" class="w-full h-10 rounded-lg">
+                        </div>
+                        
+                        <div id="gradientControls" class="hidden space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <input type="color" id="gradientColor1" value="#ffb6c1" class="w-full h-10 rounded-lg">
+                                <input type="color" id="gradientColor2" value="#cd4662" class="w-full h-10 rounded-lg">
+                            </div>
+                            <div class="slider-container">
+                                <input type="range" id="gradientAngle" min="0" max="360" value="0" class="w-full accent-pink">
+                                <span id="angleValue" class="slider-value">0°</span>
+                            </div>
+                        </div>
+
+                        <div id="imageControls" class="hidden space-y-4">
+                            <input type="file" id="backgroundImage" accept="image/*" 
+                                   class="w-full file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-sage file:text-white hover:file:bg-pink">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pattern Controls -->
+                <div class="space-y-4">
+                    <label class="font-display font-bold text-gray-700">Pattern Overlay:</label>
+                    <select id="patternType" class="w-full p-2 border-2 border-sage rounded-lg bg-white shadow-sm hover:border-pink focus:border-pink focus:ring-1 focus:ring-pink">
+                        <option value="none">No Pattern</option>
+                        <option value="hearts">Hearts (💗)</option>
+                        <option value="stars">Stars (⭐)</option>
+                        <option value="flowers">Flowers (🌸)</option>
+                        <option value="custom-emoji">Custom Emoji</option>
+                        <option value="custom-image">Custom Image</option>
+                    </select>
+
+                    <div id="patternControls" class="hidden space-y-4">
+                        <div class="slider-container">
+                            <i class="fas fa-search-minus text-pink"></i>
+                            <input type="range" id="patternSize" min="20" max="200" value="50" class="w-full accent-pink">
+                            <i class="fas fa-search-plus text-pink"></i>
+                            <span id="sizeValue" class="slider-value">50px</span>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <i class="fas fa-arrows-alt-h text-pink"></i>
+                            <input type="range" id="patternSpacing" min="100" max="200" value="120" class="w-full accent-pink">
+                            <span id="spacingValue" class="slider-value">120%</span>
+                        </div>
+
+                        <div id="emojiInput" class="hidden">
+                            <input type="text" id="customEmoji" placeholder="Type or paste emoji here" maxlength="2" 
+                                   class="w-full p-2 border-2 border-sage rounded-lg focus:border-pink focus:ring-1 focus:ring-pink">
+                        </div>
+
+                        <div id="imageInput" class="hidden">
+                            <input type="file" id="customImage" accept="image/*" 
+                                   class="w-full file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-sage file:text-white hover:file:bg-pink">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sticker Selection Panel -->
+                <div class="space-y-4">
+                    <label class="font-display font-bold text-gray-700">Select Sticker:</label>
+                    <select id="stickerSelect" class="w-full p-2 border-2 border-sage rounded-lg bg-white shadow-sm hover:border-pink focus:border-pink focus:ring-1 focus:ring-pink">
+                        <option value="">No Sticker</option>
+                        <!-- Options will be added dynamically -->
+                    </select>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Footer with Buy Me Coffee Button and Copyright -->
+    <footer class="container mx-auto px-4 py-6 flex flex-col md:flex-row justify-between items-center gap-4 border-t border-gray-200 mt-8">
+        <div class="text-sm text-gray-600">
+            © 2025 <a href="https://github.com/erry-az" target="_blank" rel="noopener" class="text-pink hover:underline">github.com/erry-az</a> • All rights reserved
+        </div>
+        <button id="buyMeCoffeeBtn" class="px-4 py-2 bg-yellow-500 text-white rounded-lg shadow hover:bg-yellow-600 transition-colors font-display font-bold flex items-center gap-2">
+            <i class="fas fa-mug-hot"></i><span>Buy Me a Coffee</span>
+        </button>
+    </footer>
+
+    <!-- Buy Me Coffee QR Code Modal -->
+    <div id="qrCodeModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-[100]">
+        <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4 relative">
+            <button id="closeQrModal" class="absolute top-2 right-2 text-gray-500 hover:text-pink">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <div class="flex flex-col gap-4 items-center text-center">
+                <h2 class="text-xl font-bold text-pink font-display">Support My Work</h2>
+                <p class="text-gray-700">If you find this app useful, consider buying me a coffee!</p>
+                <div class="p-2 border-2 border-sage rounded-lg">
+                    <img src="assets/images/qr.png" alt="Buy Me a Coffee QR Code" class="w-48 h-48 object-contain">
+                </div>
+                <p class="text-sm text-gray-500">Scan with your phone camera or payment app</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/preview.js"></script>
+
+    <style>
+        @keyframes slidePanelIn {
+            from { transform: translateX(100%) translateY(-50%); }
+            to { transform: translateX(0) translateY(-50%); }
+        }
+
+        .customize-panel.open {
+            right: 0;
+            animation: slidePanelIn 0.3s ease-out;
+        }
+
+        @media (min-width: 768px) {
+            .customize-panel {
+                position: static;
+                transform: none;
+                animation: none;
+                right: auto;
+            }
+        }
+
+        /* Hide scrollbar but keep functionality */
+        .customize-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .customize-panel::-webkit-scrollbar-track {
+            background: #F4F2EF;
+            border-radius: 3px;
+        }
+        
+        .customize-panel::-webkit-scrollbar-thumb {
+            background: #AEC289;
+            border-radius: 3px;
+        }
+        
+        .customize-panel::-webkit-scrollbar-thumb:hover {
+            background: #CD4662;
+        }
+        
+        /* Add fixed widths for slider containers and value displays */
+        .slider-container {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 0.5rem;
+        }
+        
+        .slider-container input[type="range"] {
+          flex: 1;
+          min-width: 150px;
+        }
+        
+        .slider-value {
+          width: 40px;
+          text-align: right;
+          font-variant-numeric: tabular-nums;
+        }
+
+        /* QR Code modal animation */
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #qrCodeModal.flex > div {
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        /* Apply font-family to header */
+        h1 {
+          font-family: 'Press Start 2P', monospace;
+        }
+
+        /* Add these styles to prevent unwanted scaling */
+        .preview-section {
+            min-height: 300px;
+            overscroll-behavior: none;
+        }
+        
+        #stripCanvas {
+            max-width: 100% !important;
+            height: auto !important;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+        
+        /* Prevent pull-to-refresh on mobile */
+        body {
+            overscroll-behavior-y: contain;
+        }
+    </style>
+
+    <script>
+        // Buy Me Coffee button functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const buyMeCoffeeBtn = document.getElementById('buyMeCoffeeBtn');
+            const qrCodeModal = document.getElementById('qrCodeModal');
+            const closeQrModal = document.getElementById('closeQrModal');
+            
+            buyMeCoffeeBtn.addEventListener('click', function() {
+                qrCodeModal.classList.remove('hidden');
+                qrCodeModal.classList.add('flex');
+            });
+            
+            closeQrModal.addEventListener('click', function() {
+                qrCodeModal.classList.remove('flex');
+                qrCodeModal.classList.add('hidden');
+            });
+            
+            // Close modal when clicking outside
+            qrCodeModal.addEventListener('click', function(e) {
+                if (e.target === qrCodeModal) {
+                    qrCodeModal.classList.remove('flex');
+                    qrCodeModal.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
